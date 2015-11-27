@@ -1,3 +1,7 @@
 /metadata.json
 Gemfile.lock
 .bundle/
+vagrant/puppet/modules
+nbproject
+vagrant/.vagrant
+.project

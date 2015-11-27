@@ -58,9 +58,10 @@
 # a backup. Default to 20ms.
 #
 # [*backups_disable*]
-# Disable all full and incremental backups. These settings are useful for a client that
-# is no longer being backed up (eg: a retired machine), but you wish to keep the last backups
-# available for browsing or restoring to other machines.
+# Disable all full and incremental backups. These settings are useful for a 
+# client that is no longer being backed up (eg: a retired machine), but you
+# wish to keep the last backups available for browsing or restoring to other
+# machines.
 #
 # [*xfer_method*]
 # What transport method to use to backup each host. Valid values are rsync,
@@ -72,14 +73,16 @@
 # higher values give more output.
 #
 # [*smb_share_name*]
-# Name of the host share that is backed up when using SMB. This can be a string or an
-# array of strings if there are multiple shares per host.
+# Name of the host share that is backed up when using SMB.
+# This can be a string or an  array of strings if there are multiple shares
+# per host.
 #
 # [*smb_share_username*]
 # Smbclient share user name. This is passed to smbclient's -U argument.
 #
 # [*smb_share_passwd*]
-# Smbclient share password. This is passed to smbclient via its PASSWD environment variable.
+# Smbclient share password. This is passed to smbclient via its PASSWD
+# environment variable.
 #
 # [*smb_client_full_cmd*]
 # Command to run smbclient for a full dump.
@@ -91,8 +94,9 @@
 # Command to run smbclient for a restore.
 #
 # [*tar_share_name*]
-# Which host directories to backup when using tar transport. This can be a string or an array
-# of strings if there are multiple directories to backup per host.
+# Which host directories to backup when using tar transport.
+# This can be a string or an array of strings if there are multiple directories
+# to backup per host.
 #
 # [*tar_client_cmd*]
 # Command to run tar on the client. GNU tar is required. The default will run
@@ -128,14 +132,14 @@
 # Rsync daemon password on host.
 #
 # [*rsyncd_auth_required*]
-# Whether authentication is mandatory when connecting to the client's rsyncd. By default
-# this is on, ensuring that BackupPC will refuse to connect to an rsyncd on the client that
-# is not password protected.
+# Whether authentication is mandatory when connecting to the client's rsyncd.
+# By default this is on, ensuring that BackupPC will refuse to connect to an
+# rsyncd on the client that is not password protected.
 #
 # [*rsync_csum_cache_verify_prob*]
-# When rsync checksum caching is enabled (by adding the --checksum-seed=32761 option to
-# rsync_args), the cached checksums can be occasionally verified to make sure the file
-# contents matches the cached checksums.
+# When rsync checksum caching is enabled (by adding the --checksum-seed=32761
+# option to rsync_args), the cached checksums can be occasionally verified to
+# make sure the file contents matches the cached checksums.
 #
 # [*rsync_args*]
 # Arguments to rsync for backup.
@@ -149,9 +153,9 @@
 #
 # [*backup_files_exclude*]
 # List of directories or files to exclude from the backup. For xfer_method smb,
-# only one of backup_files_exclude and backup_files_only can be specified per share.
-# If both are set for a particular share, then backup_files_only takes precedence and
-# backup_files_exclude is ignored.
+# only one of backup_files_exclude and backup_files_only can be specified per
+# share. If both are set for a particular share, then backup_files_only takes
+# precedence and backup_files_exclude is ignored.
 #
 # [*dump_pre_user_cmd*]
 # Optional command to run before a dump.
@@ -314,12 +318,14 @@ class backuppc::client (
 
     if ! empty($system_additional_commands) {
       $additional_sudo_commands = join($system_additional_commands, ', ')
-      $sudo_commands = "${additional_sudo_commands}"
+      $sudo_commands = $additional_sudo_commands
     }
 
     if ! empty($system_additional_commands_noexec) {
-      $additional_sudo_commands_noexec = join($system_additional_commands_noexec, ', ')
-      $sudo_commands_noexec = "${sudo_command_noexec}, ${additional_sudo_commands_noexec}"
+      $additional_sudo_commands_noexec =
+      join($system_additional_commands_noexec, ', ')
+      $sudo_commands_noexec = "${sudo_command_noexec},\
+ ${additional_sudo_commands_noexec}"
     } else {
       $sudo_commands_noexec = $sudo_command_noexec
     }
@@ -330,7 +336,8 @@ class backuppc::client (
         owner   => 'root',
         group   => 'root',
         mode    => '0440',
-        content => "${system_account} ALL=(ALL:ALL) NOPASSWD: ${sudo_commands}\n",
+        content =>
+        "${system_account} ALL=(ALL:ALL) NOPASSWD: ${sudo_commands}\n",
       }
     } else {
       file { '/etc/sudoers.d/backuppc':
@@ -343,7 +350,8 @@ class backuppc::client (
       owner   => 'root',
       group   => 'root',
       mode    => '0440',
-      content => "${system_account} ALL=(ALL:ALL) NOEXEC:NOPASSWD: ${sudo_commands_noexec}\n",
+      content =>
+  "${system_account} ALL=(ALL:ALL) NOEXEC:NOPASSWD: ${sudo_commands_noexec}\n",
     }
 
     user { $system_account:
@@ -364,10 +372,10 @@ class backuppc::client (
     }
 
     file { "${system_home_directory}/.ssh":
-      ensure  => directory,
-      mode    => '0700',
-      owner   => $system_account,
-      group   => $system_account,
+      ensure => directory,
+      mode   => '0700',
+      owner  => $system_account,
+      group  => $system_account,
     }
 
     file { "${system_home_directory}/backuppc.sh":
@@ -395,11 +403,12 @@ class backuppc::client (
   }
 
   @@file_line { "backuppc_host_${::fqdn}":
-    ensure  => $ensure,
-    path    => $backuppc::params::hosts,
-    match   => "^${::fqdn}.*$",
-    line    => "${::fqdn} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
-    tag     => "backuppc_hosts_${backuppc_hostname}",
+    ensure => $ensure,
+    path   => $backuppc::params::hosts,
+    match  => "^${::fqdn}.*$",
+    line   =>
+    "${::fqdn} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
+    tag    => "backuppc_hosts_${backuppc_hostname}",
   }
 
   @@file { "${backuppc::params::config_directory}/pc/${::fqdn}.pl":

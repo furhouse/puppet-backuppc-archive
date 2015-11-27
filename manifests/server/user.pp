@@ -33,22 +33,33 @@ define backuppc::server::user (
   }
 
   if empty($password) {
-    fail("A password is required for the backuppc user account named '${real_username}'")
+    fail("A password is required for the backuppc user account\
+ named '${real_username}'")
   }
-  $real_password = inline_template("{SHA}<%= Base64.encode64(Digest::SHA1.digest('${password}')).chomp! %>")
+
+  $real_password = inline_template("{SHA}<%= Base64.encode64\
+(Digest::SHA1.digest('${password}')).chomp! %>")
 
   Exec {
     require => Package[$backuppc::params::package],
     path    => ['/usr/bin', '/bin'],
   }
 
+  $test        = "test -f ${backuppc::params::htpasswd_apache}"
+  $test_pipe   = "|| OPT='-c';"
+  $test_htpass = "htpasswd -bs \${OPT} ${backuppc::params::htpasswd_apache}\
+ ${real_username} '${password}'"
+  $unless      = "grep -q ${real_username}:${real_password}\
+ ${backuppc::params::htpasswd_apache}"
+
   if $ensure == 'present' {
-    exec {"test -f ${backuppc::params::htpasswd_apache} || OPT='-c'; htpasswd -bs \${OPT} ${backuppc::params::htpasswd_apache} ${real_username} '${password}'":
-      unless  => "grep -q ${real_username}:${real_password} ${backuppc::params::htpasswd_apache}",
+    exec {"${test} ${test_pipe} ${test_htpass}":
+      unless  => $unless,
     }
   } else {
     exec {"htpasswd -D ${backuppc::params::htpasswd_apache} ${real_username}":
-      onlyif  => "egrep -q '^${real_username}:' ${backuppc::params::htpasswd_apache}",
+      onlyif  => "egrep -q '^${real_username}:'\
+ ${backuppc::params::htpasswd_apache}",
     }
   }
 }

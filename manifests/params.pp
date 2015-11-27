@@ -51,9 +51,12 @@ class backuppc::params {
       $tar_path           = '/bin/gtar'
     }
     default: {
-      fail("Operating system ${::operatingsystem} is not supported by this module")
+      fail("Operating system ${::operatingsystem}\
+ is not supported by this module")
     }
   }
-
+  $ssl_cert        = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
+  $ssl_key         = '/etc/ssl/private/ssl-cert-snakeoil.key'
+  $ssl_chain       = undef
   $htpasswd_apache = "${config_directory}/htpasswd"
 }

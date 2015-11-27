@@ -3,7 +3,9 @@
 This module will install and configure a BackupPC server and allow you to add other puppet managed nodes as clients/hosts. It
 uses exported resources to create the client's configuration file, add it to the hosts file and setup ssh access if needed.
 
-This module started as a fork of https://github.com/codec/puppet-backuppc.
+This module is a fork of a fork. 
+Original Module: https://github.com/codec/puppet-backuppc.
+Fork of original: https://github.com/wyrie/puppet-backuppc.
 
 ## Description
 
@@ -33,10 +35,10 @@ class { 'backuppc::server':
   backuppc_password => 'somesecret'
 }
 ```
-This will do the typical install, configure and service management. The module does not manage apache. It will, if the apache_configuation parameter is true,
-install an apache configuration file that creates an alias from the /backuppc url to the backuppc files on the system. Additionally it will create a htpasswd
-file with the default backuppc user and the password that you provide for access to the web based administration. You will however need to inform the apache
-service that something has changed. Alternatively you can install backuppc as a virtual host or whatever else suits your needs.
+This will do the typical install, configure and service management. The module does manage apache by default (can be disabled). 
+This module will also enable SSL and forward port 80 to 443 by default.  Additionally it will create a htpasswd
+file with the default backuppc user and the password that you provide for access to the web based administration.
+You will however need to inform the apache service that something has changed. Alternatively you can install backuppc as a virtual host or whatever else suits your needs.
 
 ### Additional login accounts
 
