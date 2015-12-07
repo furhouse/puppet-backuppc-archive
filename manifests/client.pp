@@ -12,6 +12,10 @@
 # [*ensure*]
 # Present or absent.
 #
+# [*client_hostname*]
+#  The name of this host.
+#  Default: '$::fqdn'
+#
 # [*system_account*]
 # Name of the user that will be created to allow backuppc
 # access to the system via ssh. This only applies to xfer
@@ -95,7 +99,7 @@
 #
 # [*tar_share_name*]
 # Which host directories to backup when using tar transport.
-# This can be a string or an array of strings if there are multiple directories
+# This is an array of strings for one or multiple directories
 # to backup per host.
 #
 # [*tar_client_cmd*]
@@ -189,17 +193,15 @@
 # to stop/start/browse/restore backups for this host. These users will not be
 # sent email about this host.
 #
-# === Examples
+# [*host_ip*]
+#   The host ip address to be used with host.
+#   Default: undef
 #
-#  See tests folder.
-#
-# === Authors
-#
-# Scott Barr <gsbarr@gmail.com>
 #
 class backuppc::client (
   $ensure                = 'present',
   $backuppc_hostname     = '',
+  $client_hostname       = $::fqdn,
   $system_account        = 'backup',
   $system_home_directory = '/var/backups',
   $system_additional_commands = [],
@@ -257,6 +259,7 @@ class backuppc::client (
   $email_notify_old_backup_days = false,
   $hosts_file_dhcp       = 0,
   $hosts_file_more_users = '',
+  $host_ip               = undef,
     ) {
   include backuppc::params
 
@@ -393,27 +396,30 @@ class backuppc::client (
     }
   }
 
-  if $::fqdn != $backuppc_hostname {
-    @@sshkey { $::fqdn:
+  if $client_hostname != $backuppc_hostname {
+    @@sshkey { $client_hostname:
       ensure => $ensure,
       type   => 'ssh-rsa',
       key    => $::sshrsakey,
       tag    => "backuppc_sshkeys_${backuppc_hostname}",
     }
+    @@host{$client_hostname:
+      ip      => $host_ip,
+    }
   }
 
-  @@file_line { "backuppc_host_${::fqdn}":
+  @@file_line { "backuppc_host_${client_hostname}":
     ensure => $ensure,
     path   => $backuppc::params::hosts,
-    match  => "^${::fqdn}.*$",
+    match  => "^${client_hostname}.*$",
     line   =>
-    "${::fqdn} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
+    "${client_hostname} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
     tag    => "backuppc_hosts_${backuppc_hostname}",
   }
 
-  @@file { "${backuppc::params::config_directory}/pc/${::fqdn}.pl":
+  file { "${backuppc::params::config_directory}/pc/${client_hostname}.pl":
     ensure  => $ensure,
-    content => template("${module_name}/host.pl.erb"),
+    content => template('backuppc/host.pl.erb'),
     owner   => 'backuppc',
     group   => $backuppc::params::group_apache,
     mode    => '0640',

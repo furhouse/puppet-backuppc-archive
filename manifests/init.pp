@@ -340,6 +340,11 @@ class backuppc (
       ensure => $ensure,
       source => 'puppet:///modules/backuppc/backuppc.preseed',
     }
+    package{$required_packages:
+      ensure  => installed,
+      require => File['/var/cache/debconf/backuppc.seeds'],
+      before  => Package[$package],
+    }
   }
 
   # BackupPC package and service configuration
@@ -381,6 +386,7 @@ class backuppc (
     owner   => 'backuppc',
     group   => $group_apache,
     mode    => '0644',
+    ignore => '*.sock',
   }
 
   # Workaround for client exported resources that are
@@ -424,12 +430,6 @@ class backuppc (
       require => Package[$package],
       before  => Backuppc::Server::User['backuppc'],
     }
-    #file { $config_apache:
-    #  ensure  => $ensure,
-    #  content => template("backuppc/apache_${::osfamily}.erb"),
-    #  require => Package[$package],
-    #}
-
   }
   # Create the default admin account
   backuppc::server::user { 'backuppc':

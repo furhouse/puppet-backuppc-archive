@@ -84,11 +84,15 @@ $Conf{SmbClientIncrCmd} = '<%= @smb_client_incr_cmd %>';
 $Conf{SmbClientRestoreCmd} = '<%= @smb_client_restore_cmd %>';
 <% end -%>
 <% if @tar_share_name -%>
-<% if @tar_share_name.is_a?(Array) -%>
-$Conf{TarShareName} = ['<%= @tar_share_name.join("', '") %>'];
+$Conf{TarShareName} = [
+<% @tar_share_name.each_with_index do |name, index| -%>
+<% if index < (@tar_share_name.size() -1)  -%>
+  '<%= name -%>',
 <% else -%>
-$Conf{TarShareName} = '<%= @tar_share_name %>';
+  '<%= name -%>'
 <% end -%>
+<% end %>
+];
 <% end -%>
 <% if @tar_client_cmd -%>
 $Conf{TarClientCmd} = '<%= @tar_client_cmd %>';

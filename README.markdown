@@ -87,11 +87,11 @@ class { 'backuppc::client':
   tar_share_name    => ['/home', '/etc', '/var/log'],
   tar_client_cmd    => '/usr/bin/sudo $tarPath -c -v -f - -C $shareName --totals',
   tar_full_args     => '$fileList',
-  tar_incr_arge     => '--newer=$incrDate $fileList',
+  tar_incr_args     => '--newer=$incrDate $fileList',
 }
 ```
 Debian by default installs a 'localhost' host, but if you want to managed it with puppet or if you're on Centos/RHEL this example will use the tar method to backup
-the paths you sepcify. The example uses sudo which is not configured in the module itself.
+the paths you specify. The example uses sudo which is not configured in the module itself.
 
 
 ## Limitations

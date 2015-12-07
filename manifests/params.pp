@@ -9,6 +9,7 @@
 class backuppc::params {
   case $::osfamily {
     'Debian': {
+      $required_packages  = 'apache2-utils'
       $package            = 'backuppc'
       $service            = 'backuppc'
       $topdir             = '/var/lib/backuppc'
@@ -32,6 +33,7 @@ class backuppc::params {
       $tar_path           = '/bin/tar'
     }
     'RedHat': {
+      $required_packages  = undef
       $package            = 'BackupPC'
       $service            = 'backuppc'
       $topdir             = '/var/lib/BackupPC'
