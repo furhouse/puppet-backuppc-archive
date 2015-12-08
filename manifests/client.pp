@@ -197,7 +197,6 @@
 #   The host ip address to be used with host.
 #   Default: undef
 #
-#
 class backuppc::client (
   $ensure                = 'present',
   $backuppc_hostname     = '',

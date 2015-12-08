@@ -3,3 +3,4 @@
 mod 'puppetlabs/stdlib'          , '4.9.0'
 mod 'puppetlabs/concat'          , '1.2.4'
 mod 'puppetlabs/apache'          , '1.7.0'
+mod 'thias/libvirt'              , '1.0.0'
