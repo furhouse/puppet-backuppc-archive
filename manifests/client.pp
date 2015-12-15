@@ -197,6 +197,10 @@
 #   The host ip address to be used with host.
 #   Default: undef
 #
+# [*export_hosts*]
+#   If true, the hostname and ip are exported to the /etc/hosts file.
+#   Default: true
+#
 class backuppc::client (
   $ensure                = 'present',
   $backuppc_hostname     = '',
@@ -259,6 +263,7 @@ class backuppc::client (
   $hosts_file_dhcp       = 0,
   $hosts_file_more_users = '',
   $host_ip               = undef,
+  $export_hosts          = true,
     ) {
   include backuppc::params
 
@@ -402,8 +407,10 @@ class backuppc::client (
       key    => $::sshrsakey,
       tag    => "backuppc_sshkeys_${backuppc_hostname}",
     }
-    @@host{$client_hostname:
-      ip      => $host_ip,
+    if $export_hosts{
+      @@host{$client_hostname:
+        ip      => $host_ip,
+      }
     }
   }
 
