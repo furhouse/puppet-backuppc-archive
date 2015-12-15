@@ -372,7 +372,8 @@ mkdir -p "$DUMPDIR/$dump_subdir"
  
 # Use virsh to get an array of running VMs on the hypervisor.
 # We want only the names of the VMs that are in the running state.
-vms_running=($(virsh list --state-running --name))
+# Note, removed --state-running as that doesn't seem to be supported any more.
+vms_running=($(virsh list --name))
  
 # Pause each of the running VMs to ready them for the dump operation as perscribed by the "concurrent" option.
 # Dump each of the previously running VMs
