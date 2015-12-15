@@ -28,6 +28,7 @@ dump_subdir="dump"
 script_name=${0##*/}
 date_time=$(date)
 operation_type=""
+exclude_vms=""
  
  
 ###################################################
@@ -211,6 +212,8 @@ case $i in
  CLEAN=1
  operation_type="dump cleanup"
  ;;
+ -e=*|--exclude=*)
+ exclude_vms=$i
  -h|--help)
  HELP=1
  ;;
@@ -224,7 +227,7 @@ done
 if [ $HELP -eq 1 ]; then
 echo -e "$script_name version $version help information:\nUsage:\n"
 echo -n "  $script_name"
-echo -e ' [ -d | --dump ]|[ -o | --concurrent ] [ -c | --clean ][ -d=(dir) | --dumpdir=(dir) ] [-h | --help]
+echo -e ' [ -d | --dump ]|[ -o | --concurrent ] [ -c | --clean ][ -d=(dir) | --dumpdir=(dir) ] [ -e=(vm name|vm name 2...) | --exclude=(vm...)] [-h | --help]
 ----------------------------------------------------------------------------
   This script is designed to be used for pre-backup and post-backup dump and
   cleanup operations in conjunction with BackupPC or any other enterprise grade
@@ -266,6 +269,10 @@ Options are described below:
   Specifying the dumpdir is not required, unless you want to use something other
   that the default value. The default dumpdir is
                                  /var/lib/libvirt/images/virt-backup
+
+ -e=(vm name 1|vm name2 | ...) | --exclude=(...)
+  Specify vms that should be excluded from the dump process.
+
 ------------- Additional Info
  
   The dumpdir specified is used as the *parent* dump control directory. The
@@ -373,7 +380,7 @@ mkdir -p "$DUMPDIR/$dump_subdir"
 # Use virsh to get an array of running VMs on the hypervisor.
 # We want only the names of the VMs that are in the running state.
 # Note, removed --state-running as that doesn't seem to be supported any more.
-vms_running=($(virsh list --name))
+vms_running=($(virsh list --name | grep -vwE "${exclude_vms}|"))
  
 # Pause each of the running VMs to ready them for the dump operation as perscribed by the "concurrent" option.
 # Dump each of the previously running VMs

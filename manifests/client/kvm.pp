@@ -31,12 +31,15 @@
 #   Uses cron.  This is the weekend parameter.
 #   Default: '6'  # Saturday
 #
+# [*exclude_vms*]
+#   A string contains the names of the vms separated by a '|' to be excluded.
 #
 class backuppc::client::kvm (
   $backup_directory = '/var/lib/libvirt/images/virt-backup',
   $concurrent_mode  = false,
   $schedule_hour    = '3',
   $schedule_weekday = '6',
+  $exclude_vms      = undef,
   ) {
   anchor {'backuppc::client::kvm::begin': }
 
@@ -50,7 +53,13 @@ class backuppc::client::kvm (
     $arg1 = '-d'
   }
 
-  $command_args = "${arg1} -d=${backup_directory}"
+  if $exclude_vms {
+    $arg2 = "-e=${exclude_vms}"
+  }else{
+    $args2 = ''
+  }
+
+  $command_args = "${arg1} -d=${backup_directory} ${arg2}"
 
   # download the backup script.
   file {$command:
