@@ -188,6 +188,8 @@
 #
 # [*topdir*]
 # Overwrite package default location for backuppc.
+# NOTE: THIS REQUIRES MANUAL INTERVENTION.  You MUST copy the contents of
+# /var/lib/backuppc to the new topdir.  THIS REQUIRES AN IMPROVEMENT.
 #
 # === Examples
 #
