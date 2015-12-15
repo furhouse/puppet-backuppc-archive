@@ -416,7 +416,7 @@ class backuppc::client (
     tag    => "backuppc_hosts_${backuppc_hostname}",
   }
 
-  file { "${backuppc::params::config_directory}/pc/${client_hostname}.pl":
+  @@file { "${backuppc::params::config_directory}/pc/${client_hostname}.pl":
     ensure  => $ensure,
     content => template('backuppc/host.pl.erb'),
     owner   => 'backuppc',
