@@ -214,6 +214,7 @@ case $i in
  ;;
  -e=*|--exclude=*)
  exclude_vms=$i
+ ;;
  -h|--help)
  HELP=1
  ;;
