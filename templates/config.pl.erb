@@ -21,10 +21,10 @@ $Conf{MaxOldLogFiles} = <%= @max_old_log_files %>;
 $Conf{DfPath} = '/bin/df';
 $Conf{DfCmd} = '$dfPath $topDir';
 $Conf{SplitPath} = '/usr/bin/split';
-$Conf{ParPath}   = '<%= scope.lookupvar('backuppc::params::par_path') %>';
+$Conf{ParPath}   = '<%= scope.lookupvar('backuppc::par_path') %>';
 $Conf{CatPath}   = '/bin/cat';
-$Conf{GzipPath}  = '<%= scope.lookupvar('backuppc::params::gzip_path') %>';
-$Conf{Bzip2Path} = '<%= scope.lookupvar('backuppc::params::bzip2_path') %>';
+$Conf{GzipPath}  = '<%= scope.lookupvar('backuppc::gzip_path') %>';
+$Conf{Bzip2Path} = '<%= scope.lookupvar('backuppc::bzip2_path') %>';
 $Conf{DfMaxUsagePct} = <%= @df_max_usage_pct %>;
 $Conf{TrashCleanSleepSec} = <%= @trash_clean_sleep_sec %>;
 $Conf{DHCPAddressRanges} = [
@@ -37,11 +37,11 @@ $Conf{DHCPAddressRanges} = [
 <% end -%>
 <% end -%>];
 $Conf{BackupPCUser} = 'backuppc';
-$Conf{TopDir}      = '<%= scope.lookupvar('backuppc::server::topdir') %>';
-$Conf{ConfDir}     = '<%= scope.lookupvar('backuppc::params::config_directory') %>';
-$Conf{LogDir}      = '<%= scope.lookupvar('backuppc::params::log_directory') %>';
-$Conf{InstallDir}  = '<%= scope.lookupvar('backuppc::params::install_directory') %>';
-$Conf{CgiDir}      = '<%= scope.lookupvar('backuppc::params::cgi_directory') %>';
+$Conf{TopDir}      = '<%= scope.lookupvar('backuppc::topdir') %>';
+$Conf{ConfDir}     = '<%= scope.lookupvar('backuppc::config_directory') %>';
+$Conf{LogDir}      = '<%= scope.lookupvar('backuppc::log_directory') %>';
+$Conf{InstallDir}  = '<%= scope.lookupvar('backuppc::install_directory') %>';
+$Conf{CgiDir}      = '<%= scope.lookupvar('backuppc::cgi_directory') %>';
 $Conf{BackupPCUserVerify} = 1;
 $Conf{HardLinkMax} = 31999;
 $Conf{PerlModuleLoad}     = undef;
@@ -101,7 +101,7 @@ $Conf{TarIncrArgs} = '--newer=$incrDate+ $fileList+';
 $Conf{TarClientRestoreCmd} = '$sshPath -q -x -l root $host'
        . ' env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner'
        . ' -v -f - -C $shareName+';
-$Conf{TarClientPath} = '<%= scope.lookupvar('backuppc::params::tar_path') %>';
+$Conf{TarClientPath} = '<%= scope.lookupvar('backuppc::tar_path') %>';
 $Conf{RsyncClientPath} = '/usr/bin/rsync';
 $Conf{RsyncClientCmd} = '$sshPath -q -x -l root $host $rsyncPath $argList+';
 $Conf{RsyncClientRestoreCmd} = '$sshPath -q -x -l root $host $rsyncPath $argList+';
@@ -247,9 +247,9 @@ $Conf{CgiStatusHilightColor} = {
     Disabled_AllBackupsDisabled    => '#d1d1d1',          
 };
 $Conf{CgiHeaders} = '<meta http-equiv="pragma" content="no-cache">';
-$Conf{CgiImageDir} = '<%= scope.lookupvar('backuppc::params::cgi_image_dir') %>';
+$Conf{CgiImageDir} = '<%= scope.lookupvar('backuppc::cgi_image_dir') %>';
 $Conf{CgiExt2ContentType} = { };
-$Conf{CgiImageDirURL} = '<%= scope.lookupvar('backuppc::params::cgi_image_dir_url') %>';
+$Conf{CgiImageDirURL} = '<%= scope.lookupvar('backuppc::cgi_image_dir_url') %>';
 $Conf{CgiCSSFile} = 'BackupPC_stnd.css';
 $Conf{CgiUserConfigEditEnable} = 1;
 $Conf{CgiUserConfigEdit} = {
