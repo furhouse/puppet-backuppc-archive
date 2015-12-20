@@ -1,6 +1,8 @@
 # == Class: backuppc::client::kvm
 #
 # Configures backups for KVM
+# Note, calls the '--clean' before running the backup script which
+# delates all files in the backups directory.
 #
 # === Parameters
 #
@@ -45,6 +47,7 @@ class backuppc::client::kvm (
 
   # === variables === #
   $command = '/usr/local/bin/kvm-clone-dump.bash'
+  $clean   = "${command} --clean"
 
   # build command arguments
   if $concurrent_mode {
@@ -78,7 +81,7 @@ class backuppc::client::kvm (
   # set a cron job for running the backup scripts
   # currenty set to
   cron {'kvm_backups':
-    command => "${command} ${command_args}",
+    command => "${clean} && ${command} ${command_args}",
     hour    => $schedule_hour,
     weekday => $schedule_weekday,
     require => File[$backup_directory],
