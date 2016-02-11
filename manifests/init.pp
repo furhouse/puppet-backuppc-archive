@@ -276,7 +276,7 @@ class backuppc (
   $ssl_chain                    = $backuppc::params::ssl_chain,
   $backuppc_password            = '',
   $topdir                       = $backuppc::params::topdir,
-  $manage_ssh_known_hosts        = true,
+  $manage_ssh_known_hosts       = true,
 ) inherits backuppc::params {
 
   if empty($backuppc_password) {
