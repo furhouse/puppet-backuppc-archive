@@ -26,7 +26,7 @@ class backuppc::server::apache {
   class{'apache::mod::ssl'     :}
 
   apache::vhost { 'backuppc':
-    servername => $servername,
+    servername => $::fqdn,
     port       => '80',
     docroot    => $docroot,
     rewrites   => [
@@ -39,7 +39,7 @@ class backuppc::server::apache {
   }
 
   apache::vhost{'backuppc-ssl':
-    servername      => $servername,
+    servername      => $::fqdn,
     ip              => '*',
     port            => '443',
     docroot         => $docroot,

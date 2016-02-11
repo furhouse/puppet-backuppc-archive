@@ -191,6 +191,10 @@
 # NOTE: THIS REQUIRES MANUAL INTERVENTION.  You MUST copy the contents of
 # /var/lib/backuppc to the new topdir.  THIS REQUIRES AN IMPROVEMENT.
 #
+# [*manage_ssh_known_hosts*]
+# Boolean. Manage permissions for /etc/ssh/ssh_known_hosts.
+# Default: true
+#
 # === Examples
 #
 #  See tests folder.
@@ -249,7 +253,8 @@ class backuppc (
   $ssl_key                      = $backuppc::params::ssl_key,
   $ssl_chain                    = $backuppc::params::ssl_chain,
   $backuppc_password            = '',
-  $topdir                       = $backuppc::params::topdir
+  $topdir                       = $backuppc::params::topdir,
+  $manage_ssh_known_hosts        = true,
 ) inherits backuppc::params {
 
   if empty($backuppc_password) {
@@ -466,6 +471,17 @@ class backuppc (
   }
   File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
     require => Package[$package],
+  }
+
+  # Ensure readable file permissions on
+  # the known hosts file.
+  if ($manage_ssh_known_hosts) {
+    file { '/etc/ssh/ssh_known_hosts':
+      ensure => file,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0644',
+    }
   }
 
   Sshkey <<| tag == "backuppc_sshkeys_${::fqdn}" |>>
