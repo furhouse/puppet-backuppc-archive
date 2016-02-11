@@ -224,7 +224,7 @@ class backuppc::client (
   $ping_max_msec         = false,
   $blackout_good_cnt     = false,
   $backups_disable       = false,
-  $xfer_method           = 'rsync',
+  $xfer_method           = 'tar',
   $xfer_loglevel         = '1',
   $smb_share_name        = false,
   $smb_share_username    = false,

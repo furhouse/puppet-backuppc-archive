@@ -1,4 +1,6 @@
+<% if @xfer_method %>
 $Conf{XferMethod} = '<%= @xfer_method %>';
+<% end -%>
 $Conf{XferLogLevel} = <%= @xfer_loglevel %>;
 <% if @backups_disable -%>
 $Conf{BackupsDisable} = <%= @real_backups_disable%>;
@@ -96,10 +98,6 @@ $Conf{TarShareName} = [
 <% end -%>
 <% if @tar_client_cmd -%>
 $Conf{TarClientCmd} = '<%= @tar_client_cmd %>';
-<% elsif not @system_account.empty? -%>
-$Conf{TarClientCmd} = '$sshPath -q -x -n -l <%= @system_account %> $host'
-. ' env LC_ALL=C $tarPath -c -v -f - -C $shareName+'
-. ' --totals';
 <% end -%>
 <% if @tar_full_args -%>
 $Conf{TarFullArgs} = '<%= @tar_full_args %>';
@@ -109,10 +107,6 @@ $Conf{TarIncrArgs} = '<%= @tar_incr_args %>';
 <% end -%>
 <% if @tar_client_restore_cmd -%>
 $Conf{TarClientRestoreCmd} = '<%= @tar_client_restore_cmd %>';
-<% elsif not @system_account.empty? -%>
-$Conf{TarClientRestoreCmd} = '$sshPath -q -x -l <%= @system_account %> $host'
-. ' env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner'
-. ' -v -f - -C $shareName+';
 <% end -%>
 <% if @rsync_client_cmd -%>
 $Conf{RsyncClientCmd} = '<%= @rsync_client_cmd %>';
