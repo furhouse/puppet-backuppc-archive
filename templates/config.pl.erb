@@ -15,6 +15,7 @@ $Conf{WakeupSchedule} = [<%= @wakeup_schedule.join(', ') %>];
 $Conf{MaxBackups} = <%= @max_backups %>;
 $Conf{MaxUserBackups} = <%= @max_user_backups %>;
 $Conf{MaxPendingCmds} = <%= @max_pending_cmds %>;
+$Conf{CmdQueueNice} = <%= @cmd_queue_nice -%>;
 $Conf{MaxBackupPCNightlyJobs} = <%= @max_backup_pc_nightly_jobs %>;
 $Conf{BackupPCNightlyPeriod} = <%= @backup_pc_nightly_period %>;
 $Conf{MaxOldLogFiles} = <%= @max_old_log_files %>;
@@ -75,7 +76,7 @@ $Conf{BlackoutPeriods} = [
 <% end -%>
 <% end -%>];
 $Conf{BackupZeroFilesIsFatal} = <%= @real_bzfif %>;
-$Conf{XferMethod} = 'rsync';
+$Conf{XferMethod} = '<%= @xfer_method -%>';
 $Conf{XferLogLevel} = 1;
 $Conf{ClientCharset} = '';
 $Conf{ClientCharsetLegacy} = 'iso-8859-1';
@@ -93,14 +94,10 @@ $Conf{SmbClientRestoreCmd} = '$smbClientPath \\\\$host\\$shareName'
             . ' $I_option -U $userName -E -N -d 1'
             . ' -c tarmode\\ full -Tx -';
 $Conf{TarShareName} = '/';
-$Conf{TarClientCmd} = '$sshPath -q -x -n -l root $host'
-                    . ' env LC_ALL=C $tarPath -c -v -f - -C $shareName+'
-                    . ' --totals';
+$Conf{TarClientCmd} = '<%= @tar_client_cmd -%>';
 $Conf{TarFullArgs} = '$fileList+';
 $Conf{TarIncrArgs} = '--newer=$incrDate+ $fileList+';
-$Conf{TarClientRestoreCmd} = '$sshPath -q -x -l root $host'
-       . ' env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner'
-       . ' -v -f - -C $shareName+';
+$Conf{TarClientRestoreCmd} = '<%= @tar_client_restore_cmd -%>';
 $Conf{TarClientPath} = '<%= scope.lookupvar('backuppc::tar_path') %>';
 $Conf{RsyncClientPath} = '/usr/bin/rsync';
 $Conf{RsyncClientCmd} = '$sshPath -q -x -l root $host $rsyncPath $argList+';

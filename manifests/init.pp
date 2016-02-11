@@ -11,6 +11,19 @@
 # Boolean. Will enable service at boot
 # and ensure a running service.
 #
+# [*xfer_method*]
+#   Options: rsync or tar
+#   Default: tar
+#
+# [*tar_client_cmd*]
+#   The client command for tar.
+#   Default: '$sshPath -q -x -n -l backup $host env LC_ALL=C sudo $tarPath -c
+#             -v -f - -C $shareName+ --totals',
+#
+# [*tar_client_restore_cmd*]
+#   Default: '$sshPath -q -x -l backup $host env LC_ALL=C sudo $tarPath -x -p
+#             --numeric-owner --same-owner -v -f - -C $shareName+'
+#
 # [*wakup_schedule*]
 # Times at which we wake up, check all the PCs,
 # and schedule necessary backups. Times are measured
@@ -157,6 +170,11 @@
 # [*email_headers*]
 # Additional email headers.
 #
+# [*cmd_queue_nice*]
+#   Nice level at which CmdQueue commands (eg: BackupPC_link and
+#   BackupPC_nightly) are run at.
+#   Default: '10'
+#
 # [*apache_configuration*]
 #   Boolean. Whether to install the apache configuration file that creates an
 #   alias for the /backuppc url. Disable this if you intend to install backuppc
@@ -202,6 +220,9 @@
 class backuppc (
   $ensure                       = 'present',
   $service_enable               = true,
+  $xfer_method                  = 'tar',
+  $tar_client_cmd               = '$sshPath -q -x -n -l backup $host env LC_ALL=C sudo $tarPath -c -v -f - -C $shareName+ --totals',
+  $tar_client_restore_cmd       = '$sshPath -q -x -l backup $host env LC_ALL=C sudo $tarPath -x -p --numeric-owner --same-owner -v -f - -C $shareName+',
   $wakeup_schedule              =
     [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
@@ -243,6 +264,7 @@ class backuppc (
   { 'MIME-Version' => 1.0,
     'Content-Type' => 'text/plain; charset="iso-8859-1"',
   },
+  $cmd_queue_nice               = '10',
   $apache_configuration         = true,
   $apache_allow_from            = 'all',
   $ssl_cert                     = $backuppc::params::ssl_cert,
@@ -291,8 +313,9 @@ class backuppc (
   validate_re($incr_period, '^[0-9]([0-9]*)?(\.[0-9]{1,2})?$',
   'Incr_period parameter should be a number')
 
-  validate_re($full_keep_cnt, '^[1-9]([0-9]*)?$',
-  'Full_keep_cnt parameter should be a number')
+  # can be an array of numbers so not a valid test!
+  #validate_re($full_keep_cnt, '^[1-9]([0-9]*)?$',
+  #'Full_keep_cnt parameter should be a number')
 
   validate_re($full_age_max, '^[1-9]([0-9]*)?$',
   'Full_age_max parameter should be a number')
