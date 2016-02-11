@@ -17,12 +17,12 @@
 #
 # [*tar_client_cmd*]
 #   The client command for tar.
-#   Default: '$sshPath -q -x -n -l backup $host env LC_ALL=C sudo $tarPath -c
-#             -v -f - -C $shareName+ --totals',
+#   Default: '$sshPath -q -x -n -l root $host env LC_ALL=C $tarPath -c -v -f -
+#              -C $shareName+ --totals''
 #
 # [*tar_client_restore_cmd*]
-#   Default: '$sshPath -q -x -l backup $host env LC_ALL=C sudo $tarPath -x -p
-#             --numeric-owner --same-owner -v -f - -C $shareName+'
+#   Default: '$sshPath -q -x -l root $host env LC_ALL=C $tarPath -x -p
+#              --numeric-owner --same-owner -v -f - -C $shareName+'
 #
 # [*wakup_schedule*]
 # Times at which we wake up, check all the PCs,
@@ -221,8 +221,8 @@ class backuppc (
   $ensure                       = 'present',
   $service_enable               = true,
   $xfer_method                  = 'tar',
-  $tar_client_cmd               = '$sshPath -q -x -n -l backup $host env LC_ALL=C sudo $tarPath -c -v -f - -C $shareName+ --totals',
-  $tar_client_restore_cmd       = '$sshPath -q -x -l backup $host env LC_ALL=C sudo $tarPath -x -p --numeric-owner --same-owner -v -f - -C $shareName+',
+  $tar_client_cmd               = '$sshPath -q -x -n -l root $host env LC_ALL=C $tarPath -c -v -f - -C $shareName+ --totals''
+  $tar_client_restore_cmd       = '$sshPath -q -x -l root $host env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner -v -f - -C $shareName+'
   $wakeup_schedule              =
     [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
