@@ -211,7 +211,7 @@
 #
 # [*manage_ssh_known_hosts*]
 # Boolean. Manage permissions for /etc/ssh/ssh_known_hosts.
-# Default: true
+# Default: false
 #
 # === Examples
 #
@@ -276,7 +276,7 @@ class backuppc (
   $ssl_chain                    = $backuppc::params::ssl_chain,
   $backuppc_password            = '',
   $topdir                       = $backuppc::params::topdir,
-  $manage_ssh_known_hosts       = true,
+  $manage_ssh_known_hosts       = false,
 ) inherits backuppc::params {
 
   if empty($backuppc_password) {
@@ -416,7 +416,7 @@ class backuppc (
     owner   => 'backuppc',
     group   => $group_apache,
     mode    => '0644',
-    ignore => '*.sock',
+    ignore  => '*.sock',
   }
 
   # Workaround for client exported resources that are
