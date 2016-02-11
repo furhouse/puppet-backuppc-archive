@@ -221,8 +221,8 @@ class backuppc (
   $ensure                       = 'present',
   $service_enable               = true,
   $xfer_method                  = 'tar',
-  $tar_client_cmd               = '$sshPath -q -x -n -l root $host env LC_ALL=C $tarPath -c -v -f - -C $shareName+ --totals''
-  $tar_client_restore_cmd       = '$sshPath -q -x -l root $host env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner -v -f - -C $shareName+'
+  $tar_client_cmd               = '$sshPath -q -x -n -l root $host env LC_ALL=C $tarPath -c -v -f - -C $shareName+ --totals',
+  $tar_client_restore_cmd       = '$sshPath -q -x -l root $host env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner -v -f - -C $shareName+',
   $wakeup_schedule              =
     [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
