@@ -201,7 +201,7 @@
 #   If true, the hostname and ip are exported to the /etc/hosts file.
 #   Default: true
 #
-class backuppc::client (
+define backuppc::client (
   $ensure                            = 'present',
   $backuppc_hostname                 = undef,
   $client_hostname                   = $::fqdn,
@@ -264,7 +264,8 @@ class backuppc::client (
   $hosts_file_more_users             = undef,
   $host_ip                           = undef,
   $export_hosts                      = true,
-    ) {
+  ) {
+
   include backuppc::params
 
   validate_re($ensure, '^(present|absent)$',
