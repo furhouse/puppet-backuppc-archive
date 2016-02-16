@@ -10,25 +10,26 @@
 class backuppc::server::config {
   anchor{'backuppc::server::config::begin':}
 
+  file { $backuppc::config_directory:
+    ensure  => $backuppc::ensure,
+    owner   => 'backuppc',
+    require => Anchor['backuppc::server::config::begin'],
+  }
+
   file { $backuppc::config:
     ensure  => $backuppc::ensure,
     owner   => 'backuppc',
     group   => $backuppc::group_apache,
     mode    => '0644',
     content => template('backuppc/config.pl.erb'),
-    require => Anchor['backuppc::server::config::begin'],
+    require => File[$backuppc::config_directory],
   }
 
-  file { $backuppc::config_directory:
-    ensure  => $backuppc::ensure,
-    owner   => 'backuppc',
-    require => File[$backuppc::config],
-  }
 
   file { "${backuppc::config_directory}/pc":
     ensure  => link,
     target  => $backuppc::config_directory,
-    require => File[$backuppc::config_directory],
+    require => File[$backuppc::config],
   }
 
   file { $backuppc::topdir :
