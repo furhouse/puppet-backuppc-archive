@@ -96,7 +96,7 @@ class backuppc::server::config {
     }
 
     # Export backuppcs authorized key to all clients
-    if ! empty($backuppc_pubkey_rsa) {
+    if ! empty($backuppc::backuppc_pubkey_rsa) {
       @@ssh_authorized_key { "backuppc_${::fqdn}":
         ensure  => present,
         key     => $backuppc::backuppc_pubkey_rsa,
