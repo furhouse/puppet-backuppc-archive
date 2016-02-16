@@ -25,7 +25,6 @@ class backuppc::server::config {
     require => File[$backuppc::config_directory],
   }
 
-
   file { "${backuppc::config_directory}/pc":
     ensure  => link,
     target  => $backuppc::config_directory,
@@ -63,7 +62,7 @@ class backuppc::server::config {
           ensure  => link,
           target  => $backuppc::config_directory,
           before  => Exec['backuppc-ssh-keygen'],
-          require => File[[$backuppc::topdir, "${backuppc::topdir}/.ssh"]],
+          require => File["${backuppc::topdir}/.ssh"],
         }
       }
       'RedHat': {
@@ -71,7 +70,7 @@ class backuppc::server::config {
           ensure  => link,
           target  => $backuppc::config_directory,
           before  => Exec['backuppc-ssh-keygen'],
-          require => File[[$backuppc::topdir, "${backuppc::topdir}/.ssh"]],
+          require => File["${backuppc::topdir}/.ssh"],
         }
       }
       default: {
@@ -87,7 +86,7 @@ class backuppc::server::config {
       user    => 'backuppc',
       unless  => "test -f ${backuppc::topdir}/.ssh/id_rsa",
       path    => ['/usr/bin','/bin'],
-      require => File[[$backuppc::topdir, "${backuppc::topdir}/.ssh"]],
+      require => File["${backuppc::topdir}/.ssh"],
     }
 
     # Create the default admin account
@@ -119,9 +118,9 @@ class backuppc::server::config {
     # Hosts
     File <<| tag == "backuppc_config_${::fqdn}" |>> {
       group   => $backuppc::group_apache,
-      notify  => Service[$backuppc::service],
       require => Backuppc::Server::User['backuppc'],
     }
+
     File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
       require => Backuppc::Server::User['backuppc'],
     }

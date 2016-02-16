@@ -377,8 +377,9 @@ class backuppc (
   }
 
   class{'backuppc::server::service':
-    require => Class['backuppc::server::config'],
+    subscribe => Class['backuppc::server::config'],
   }
+
   anchor{'backuppc::end':
     require => Class['backuppc::server::service'],
   }
