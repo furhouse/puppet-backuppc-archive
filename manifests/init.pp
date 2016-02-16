@@ -209,13 +209,15 @@
 # NOTE: THIS REQUIRES MANUAL INTERVENTION.  You MUST copy the contents of
 # /var/lib/backuppc to the new topdir.  THIS REQUIRES AN IMPROVEMENT.
 #
+# [*collect*]
+#   Checks if this module should collect via exported resources ssh keys
+#   and install users.
+#   Default: true
+#
 # === Examples
 #
 #  See tests folder.
 #
-# === Authors
-#
-# Scott Barr <gsbarr@gmail.com>
 #
 class backuppc (
   $ensure                       = 'present',
@@ -271,7 +273,8 @@ class backuppc (
   $ssl_key                      = $backuppc::params::ssl_key,
   $ssl_chain                    = $backuppc::params::ssl_chain,
   $backuppc_password            = '',
-  $topdir                       = $backuppc::params::topdir
+  $topdir                       = $backuppc::params::topdir,
+  $collect                      = $backuppc::params::collect,
 ) inherits backuppc::params {
 
   if empty($backuppc_password) {
@@ -356,9 +359,6 @@ class backuppc (
   $real_incr_fill = bool2num($incr_fill)
   $real_bzfif     = bool2num($blackout_zero_files_is_fatal)
 
-  # Set up dependencies
-  Package[$package] -> File[$config] -> Service[$service]
-
   # Include preseeding for debian packages
   if $::osfamily == 'Debian' {
     file{'/var/cache/debconf/backuppc.seeds':
@@ -377,12 +377,16 @@ class backuppc (
     ensure  => $ensure,
   }
 
-  service { $service:
-    ensure    => $service_enable,
-    enable    => $service_enable,
-    hasstatus => false,
-    pattern   => 'BackupPC'
+  # BackupPC apache configuration
+  if $apache_configuration {
+    class{'backuppc::server::apache':
+      require => Package[$package],
+      before  => [
+      Backuppc::Server::User['backuppc'],
+      File[$config]],
+    }
   }
+
 
   file { $config:
     ensure  => $ensure,
@@ -390,115 +394,133 @@ class backuppc (
     group   => $group_apache,
     mode    => '0644',
     content => template('backuppc/config.pl.erb'),
+    require => Package[$package],
   }
 
   file { $config_directory:
     ensure  => $ensure,
     owner   => 'backuppc',
-    group   => $group_apache,
-    require => Package[$package],
+    require => File[$config],
   }
 
   file { "${config_directory}/pc":
     ensure  => link,
     target  => $config_directory,
-    require => Package[$package],
+    require => File[$config_directory],
   }
 
-  file { [$topdir, "${topdir}/.ssh"]:
+  file { $topdir :
     ensure  => 'directory',
     recurse => true,
     owner   => 'backuppc',
     group   => $group_apache,
     mode    => '0644',
-    ignore => '*.sock',
-  }
-
-  # Workaround for client exported resources that are
-  # on a different osfamily. Maintain a symlink to alternative
-  # config directory targets.
-  case $osfamily {
-    'Debian': {
-      file { '/etc/BackupPC':
-        ensure => link,
-        target => $config_directory,
-      }
-    }
-    'RedHat': {
-      file { '/etc/backuppc':
-        ensure => link,
-        target => $config_directory,
-      }
-    }
-    default: {
-      notify { "If you've added support for ${::operatingsystem} you'll need\
- to extend this case statement to.":
-      }
-    }
-  }
-
-  exec { 'backuppc-ssh-keygen':
-    command =>
-    "ssh-keygen -f ${topdir}/.ssh/id_rsa -C 'BackupPC on ${::fqdn}' -N ''",
-    user    => 'backuppc',
-    unless  => "test -f ${topdir}/.ssh/id_rsa",
-    path    => ['/usr/bin','/bin'],
-    require => [
-        Package[$package],
-        File["${topdir}/.ssh"],
-    ],
-  }
-
-  # BackupPC apache configuration
-  if $apache_configuration {
-    class{'backuppc::server::apache':
-      require => Package[$package],
-      before  => Backuppc::Server::User['backuppc'],
-    }
-  }
-  # Create the default admin account
-  backuppc::server::user { 'backuppc':
-    password => $backuppc_password
-  }
-
-  # Export backuppc's authorized key to all clients
-  # TODO don't rely on facter to obtain the ssh key.
-  if ! empty($backuppc_pubkey_rsa) {
-    @@ssh_authorized_key { "backuppc_${::fqdn}":
-      ensure  => present,
-      key     => $backuppc_pubkey_rsa,
-      name    => "backuppc_${::fqdn}",
-      user    => 'backup',
-      options => [
-        'command="~/backuppc.sh"',
-        'no-agent-forwarding',
-        'no-port-forwarding',
-        'no-pty',
-        'no-X11-forwarding',
-      ],
-      type    => 'ssh-rsa',
-      tag     => "backuppc_${::fqdn}",
-    }
-  }
-
-  # Hosts
-  File <<| tag == "backuppc_config_${::fqdn}" |>> {
-    group   => $group_apache,
-    notify  => Service[$service],
+    ignore  => '*.sock',
     require => File["${config_directory}/pc"],
   }
-  File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
-    require => Package[$package],
-  }
 
-  # Ensure readable file permissions on
-  # the known hosts file.
-  file { '/etc/ssh/ssh_known_hosts':
-    ensure => file,
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0644',
-  }
+  ## only do if collect is enabled
+  if $collect {
+    file { "${topdir}/.ssh":
+      ensure  => 'directory',
+      recurse => true,
+      owner   => 'backuppc',
+      group   => $group_apache,
+      mode    => '0644',
+      ignore  => '*.sock',
+      require => File[$topdir],
+    }
 
-  Sshkey <<| tag == "backuppc_sshkeys_${::fqdn}" |>>
+    # Workaround for client exported resources that are
+    # on a different osfamily. Maintain a symlink to alternative
+    # config directory targets.
+    case $osfamily {
+      'Debian': {
+        file { '/etc/BackupPC':
+          ensure  => link,
+          target  => $config_directory,
+          before  => Exec['backuppc-ssh-keygen'],
+          require => File[[$topdir, "${topdir}/.ssh"]],
+        }
+      }
+      'RedHat': {
+        file { '/etc/backuppc':
+          ensure  => link,
+          target  => $config_directory,
+          before  => Exec['backuppc-ssh-keygen'],
+          require => File[[$topdir, "${topdir}/.ssh"]],
+        }
+      }
+      default: {
+        notify { "If you've added support for ${::operatingsystem} you'll need\
+   to extend this case statement to.":
+        }
+      }
+    }
+
+    exec { 'backuppc-ssh-keygen':
+      command =>
+      "ssh-keygen -f ${topdir}/.ssh/id_rsa -C 'BackupPC on ${::fqdn}' -N ''",
+      user    => 'backuppc',
+      unless  => "test -f ${topdir}/.ssh/id_rsa",
+      path    => ['/usr/bin','/bin'],
+      require => File[[$topdir, "${topdir}/.ssh"]],
+    }
+
+    # Create the default admin account
+    backuppc::server::user { 'backuppc':
+      password => $backuppc_password,
+      require  => Exec['backuppc-ssh-keygen'],
+    }
+
+    # Export backuppc's authorized key to all clients
+    # TODO don't rely on facter to obtain the ssh key.
+    if ! empty($backuppc_pubkey_rsa) {
+      @@ssh_authorized_key { "backuppc_${::fqdn}":
+        ensure  => present,
+        key     => $backuppc_pubkey_rsa,
+        name    => "backuppc_${::fqdn}",
+        user    => 'backup',
+        options => [
+          'command="~/backuppc.sh"',
+          'no-agent-forwarding',
+          'no-port-forwarding',
+          'no-pty',
+          'no-X11-forwarding',
+        ],
+        type    => 'ssh-rsa',
+        tag     => "backuppc_${::fqdn}",
+        require => Backuppc::Server::User['backuppc'],
+      }
+    }
+
+    # Hosts
+    File <<| tag == "backuppc_config_${::fqdn}" |>> {
+      group   => $group_apache,
+      notify  => Service[$service],
+      require => Backuppc::Server::User['backuppc'],
+    }
+    File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
+      require => Backuppc::Server::User['backuppc'],
+    }
+
+    # Ensure readable file permissions on
+    # the known hosts file.
+    file { '/etc/ssh/ssh_known_hosts':
+      ensure  => file,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => Backuppc::Server::User['backuppc'],
+    }
+
+    Sshkey <<| tag == "backuppc_sshkeys_${::fqdn}" |>>
+    service { $service:
+       ensure    => $service_enable,
+       enable    => $service_enable,
+       hasstatus => false,
+       pattern   => 'BackupPC',
+       require   => File['/etc/ssh/ssh_known_hosts'],
+    }
+  }
 }
