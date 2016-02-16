@@ -278,90 +278,15 @@ class backuppc (
 ) inherits backuppc::params {
   anchor{'backuppc::begin':}
 
-  if empty($backuppc_password) {
-    fail("Please provide a password for the backuppc user.\
- This is used to login to the web based administration site.")
-  }
-  validate_bool($service_enable)
-
-  validate_re($ensure, '^(present|absent)$',
-  'ensure parameter must have a value of: present or absent')
-
-  validate_re($max_backups, '^[1-9]([0-9]*)?$',
-  'Max_backups parameter should be a number')
-
-  validate_re($max_user_backups, '^[1-9]([0-9]*)?$',
-  'Max_user_backups parameter should be a number')
-
-  validate_re($max_pending_cmds, '^[1-9]([0-9]*)?$',
-  'Max_pending_cmds parameter should be a number')
-
-  validate_re($max_backup_pc_nightly_jobs, '^[1-9]([0-9]*)?$',
-  'Max_backup_pc_nightly_jobs parameter should be a number')
-
-  validate_re($df_max_usage_pct, '^[1-9]([0-9]*)?$',
-  'Df_max_usage_pct parameter should be a number')
-
-  validate_re($max_old_log_files, '^[1-9]([0-9]*)?$',
-  'Max_old_log_files parameter should be a number')
-
-  validate_re($backup_pc_nightly_period, '^[1-9]([0-9]*)?$',
-  'Backup_pc_nightly_period parameter should be a number')
-
-  validate_re($trash_clean_sleep_sec,  '^[1-9]([0-9]*)?$',
-  'Trash_clean_sleep_sec parameter should be a number')
-
-  validate_re($full_period, '^[0-9]([0-9]*)?(\.[0-9]{1,2})?$',
-  'Full_period parameter should be a number')
-
-  validate_re($incr_period, '^[0-9]([0-9]*)?(\.[0-9]{1,2})?$',
-  'Incr_period parameter should be a number')
-
-  # can be an array of numbers so not a valid test!
-  #validate_re($full_keep_cnt, '^[1-9]([0-9]*)?$',
-  #'Full_keep_cnt parameter should be a number')
-
-  validate_re($full_age_max, '^[1-9]([0-9]*)?$',
-  'Full_age_max parameter should be a number')
-
-  validate_re($incr_keep_cnt, '^[1-9]([0-9]*)?$',
-  'Incr_keep_cnt parameter should be a number')
-
-  validate_re($incr_age_max, '^[1-9]([0-9]*)?$',
-  'Incr_age_max parameter should be a number')
-
-  validate_re($partial_age_max, '^[1-9]([0-9]*)?$',
-  'Partial_age_max parameter should be a number')
-
-  validate_re($restore_info_keep_cnt, '^[1-9]([0-9]*)?$',
-  'Restore_info_keep_cnt parameter should be a number')
-
-  validate_re($archive_info_keep_cnt, '^[1-9]([0-9]*)?$',
-  'Restore_info_keep_cnt parameter should be a number')
-
-  validate_re($blackout_good_cnt, '^[1-9]([0-9]*)?$',
-  'Blackout_good_cnt parameter should be a number')
-
-  validate_re($email_notify_min_days, '^[0-9]([0-9]*)?(\.[0-9]{1,2})?$',
-  'Email_notify_min_days parameter should be a number')
-
-  validate_re($email_notify_old_backup_days, '^[1-9]([0-9]*)?$',
-  'Blackout_good_cnt parameter should be a number')
-
-  validate_array($wakeup_schedule)
-  validate_array($dhcp_address_ranges)
-  validate_array($incr_levels)
-  validate_array($blackout_periods)
-
-  validate_hash($email_headers)
-
-  validate_string($apache_allow_from)
-
   $real_incr_fill = bool2num($incr_fill)
   $real_bzfif     = bool2num($blackout_zero_files_is_fatal)
 
-  class {'backuppc::server::install':
+  class {'backuppc::server::validate':
     require => Anchor['backuppc::begin'],
+  }
+
+  class {'backuppc::server::install':
+    require => Class['backuppc::server::validate'],
   }
 
   # BackupPC apache configuration
