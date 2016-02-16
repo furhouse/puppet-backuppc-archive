@@ -276,6 +276,7 @@ class backuppc (
   $topdir                       = $backuppc::params::topdir,
   $collect                      = $backuppc::params::collect,
 ) inherits backuppc::params {
+  anchor{'backuppc::begin':}
 
   if empty($backuppc_password) {
     fail("Please provide a password for the backuppc user.\
@@ -359,168 +360,26 @@ class backuppc (
   $real_incr_fill = bool2num($incr_fill)
   $real_bzfif     = bool2num($blackout_zero_files_is_fatal)
 
-  # Include preseeding for debian packages
-  if $::osfamily == 'Debian' {
-    file{'/var/cache/debconf/backuppc.seeds':
-      ensure => $ensure,
-      source => 'puppet:///modules/backuppc/backuppc.preseed',
-    }
-    package{$required_packages:
-      ensure  => installed,
-      require => File['/var/cache/debconf/backuppc.seeds'],
-      before  => Package[$package],
-    }
-  }
-
-  # BackupPC package and service configuration
-  package { $package:
-    ensure  => $ensure,
+  class {'backuppc::server::install':
+    require => Anchor['backuppc::begin'],
   }
 
   # BackupPC apache configuration
   if $apache_configuration {
     class{'backuppc::server::apache':
-      require => Package[$package],
-      before  => [
-      Backuppc::Server::User['backuppc'],
-      File[$config]],
+      require => Class['backuppc::server::install'],
+      before  => Class['backuppc::server::config'],
     }
   }
 
-
-  file { $config:
-    ensure  => $ensure,
-    owner   => 'backuppc',
-    group   => $group_apache,
-    mode    => '0644',
-    content => template('backuppc/config.pl.erb'),
-    require => Package[$package],
+  class{'backuppc::server::config':
+    require => Class['backuppc::server::install'],
   }
 
-  file { $config_directory:
-    ensure  => $ensure,
-    owner   => 'backuppc',
-    require => File[$config],
+  class{'backuppc::server::service':
+    require => Class['backuppc::server::config'],
   }
-
-  file { "${config_directory}/pc":
-    ensure  => link,
-    target  => $config_directory,
-    require => File[$config_directory],
-  }
-
-  file { $topdir :
-    ensure  => 'directory',
-    recurse => true,
-    owner   => 'backuppc',
-    group   => $group_apache,
-    mode    => '0644',
-    ignore  => '*.sock',
-    require => File["${config_directory}/pc"],
-  }
-
-  ## only do if collect is enabled
-  if $collect {
-    file { "${topdir}/.ssh":
-      ensure  => 'directory',
-      recurse => true,
-      owner   => 'backuppc',
-      group   => $group_apache,
-      mode    => '0644',
-      ignore  => '*.sock',
-      require => File[$topdir],
-    }
-
-    # Workaround for client exported resources that are
-    # on a different osfamily. Maintain a symlink to alternative
-    # config directory targets.
-    case $osfamily {
-      'Debian': {
-        file { '/etc/BackupPC':
-          ensure  => link,
-          target  => $config_directory,
-          before  => Exec['backuppc-ssh-keygen'],
-          require => File[[$topdir, "${topdir}/.ssh"]],
-        }
-      }
-      'RedHat': {
-        file { '/etc/backuppc':
-          ensure  => link,
-          target  => $config_directory,
-          before  => Exec['backuppc-ssh-keygen'],
-          require => File[[$topdir, "${topdir}/.ssh"]],
-        }
-      }
-      default: {
-        notify { "If you've added support for ${::operatingsystem} you'll need\
-   to extend this case statement to.":
-        }
-      }
-    }
-
-    exec { 'backuppc-ssh-keygen':
-      command =>
-      "ssh-keygen -f ${topdir}/.ssh/id_rsa -C 'BackupPC on ${::fqdn}' -N ''",
-      user    => 'backuppc',
-      unless  => "test -f ${topdir}/.ssh/id_rsa",
-      path    => ['/usr/bin','/bin'],
-      require => File[[$topdir, "${topdir}/.ssh"]],
-    }
-
-    # Create the default admin account
-    backuppc::server::user { 'backuppc':
-      password => $backuppc_password,
-      require  => Exec['backuppc-ssh-keygen'],
-    }
-
-    # Export backuppc's authorized key to all clients
-    # TODO don't rely on facter to obtain the ssh key.
-    if ! empty($backuppc_pubkey_rsa) {
-      @@ssh_authorized_key { "backuppc_${::fqdn}":
-        ensure  => present,
-        key     => $backuppc_pubkey_rsa,
-        name    => "backuppc_${::fqdn}",
-        user    => 'backup',
-        options => [
-          'command="~/backuppc.sh"',
-          'no-agent-forwarding',
-          'no-port-forwarding',
-          'no-pty',
-          'no-X11-forwarding',
-        ],
-        type    => 'ssh-rsa',
-        tag     => "backuppc_${::fqdn}",
-        require => Backuppc::Server::User['backuppc'],
-      }
-    }
-
-    # Hosts
-    File <<| tag == "backuppc_config_${::fqdn}" |>> {
-      group   => $group_apache,
-      notify  => Service[$service],
-      require => Backuppc::Server::User['backuppc'],
-    }
-    File_line <<| tag == "backuppc_hosts_${::fqdn}" |>> {
-      require => Backuppc::Server::User['backuppc'],
-    }
-
-    # Ensure readable file permissions on
-    # the known hosts file.
-    file { '/etc/ssh/ssh_known_hosts':
-      ensure  => file,
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0644',
-      require => Backuppc::Server::User['backuppc'],
-    }
-
-    Sshkey <<| tag == "backuppc_sshkeys_${::fqdn}" |>>
-    service { $service:
-       ensure    => $service_enable,
-       enable    => $service_enable,
-       hasstatus => false,
-       pattern   => 'BackupPC',
-       require   => File['/etc/ssh/ssh_known_hosts'],
-    }
+  anchor{'backuppc::end':
+    require => Class['backuppc::server::service'],
   }
 }
