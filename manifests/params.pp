@@ -61,4 +61,5 @@ class backuppc::params {
   $ssl_key         = '/etc/ssl/private/ssl-cert-snakeoil.key'
   $ssl_chain       = undef
   $htpasswd_apache = "${config_directory}/htpasswd"
+  $collect         = true
 }
