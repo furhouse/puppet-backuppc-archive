@@ -12,9 +12,12 @@
 # [*ensure*]
 # Present or absent.
 #
-# [*client_hostname*]
-#  The name of this host.
-#  Default: '$::fqdn'
+# [*client_name_alias*]
+# Override the client's host name. This allows multiple clients to all refer to the same physical host. This should only be set in the per-PC config file and is only used by BackupPC at the last moment prior to generating the command used to backup that machine (ie: the value of $Conf{ClientNameAlias} is invisible everywhere else in BackupPC). The setting can be a host name or IP address, eg:
+#         $Conf{ClientNameAlias} = 'realHostName';
+#         $Conf{ClientNameAlias} = '192.1.1.15';
+# will cause the relevant smb/tar/rsync backup/restore commands to be directed to realHostName, not the client name.
+# Note: this setting doesn't work for hosts with DHCP set to 1.
 #
 # [*system_account*]
 # Name of the user that will be created to allow backuppc
@@ -57,15 +60,33 @@
 # PC is not on the network, a number of consecutive bad pings is allowed
 # before the good ping count is reset.
 #
+# [*blackout_periods*]
+#  One or more blackout periods can be specified. If a client is subject to blackout then no regular (non-manual) backups will be started during any of these periods. hourBegin and hourEnd specify hours fro midnight and weekDays is a list of days of the week where 0 is Sunday, 1 is Monday etc.
+#  For example:
+#     $Conf{BlackoutPeriods} = [
+#          {
+#              hourBegin =>  7.0,
+#              hourEnd   => 19.5,
+#              weekDays  => [1, 2, 3, 4, 5],
+#          },
+#     ];
+#  specifies one blackout period from 7:00am to 7:30pm local time on Mon-Fri.
+#
 # [*ping_max_msec*]
 # Maximum latency between backuppc server and client to schedule
 # a backup. Default to 20ms.
 #
+# [*ping_cmd*]
+# Ping command. The following variables are substituted at run-time:
+#      $pingPath      path to ping ($Conf{PingPath})
+#      $host          host name
+#    Wade Brown reports that on solaris 2.6 and 2.7 ping -s returns the wrong exit status (0 even on failure). Replace with "ping $host 1", which gets the correct exit status but we don't get the round-trip time.
+#    Note: all Cmds are executed directly without a shell, so the prog name needs to be a full path and you can't include shell syntax like redirection and pipes; put that in a script if you need it.
+#
 # [*backups_disable*]
-# Disable all full and incremental backups. These settings are useful for a 
-# client that is no longer being backed up (eg: a retired machine), but you
-# wish to keep the last backups available for browsing or restoring to other
-# machines.
+# Disable all full and incremental backups. These settings are useful for a client that
+# is no longer being backed up (eg: a retired machine), but you wish to keep the last backups
+# available for browsing or restoring to other machines.
 #
 # [*xfer_method*]
 # What transport method to use to backup each host. Valid values are rsync,
@@ -77,16 +98,14 @@
 # higher values give more output.
 #
 # [*smb_share_name*]
-# Name of the host share that is backed up when using SMB.
-# This can be a string or an  array of strings if there are multiple shares
-# per host.
+# Name of the host share that is backed up when using SMB. This can be a string or an
+# array of strings if there are multiple shares per host.
 #
 # [*smb_share_username*]
 # Smbclient share user name. This is passed to smbclient's -U argument.
 #
 # [*smb_share_passwd*]
-# Smbclient share password. This is passed to smbclient via its PASSWD
-# environment variable.
+# Smbclient share password. This is passed to smbclient via its PASSWD environment variable.
 #
 # [*smb_client_full_cmd*]
 # Command to run smbclient for a full dump.
@@ -98,9 +117,8 @@
 # Command to run smbclient for a restore.
 #
 # [*tar_share_name*]
-# Which host directories to backup when using tar transport.
-# This is an array of strings for one or multiple directories
-# to backup per host.
+# Which host directories to backup when using tar transport. This can be a string or an array
+# of strings if there are multiple directories to backup per host.
 #
 # [*tar_client_cmd*]
 # Command to run tar on the client. GNU tar is required. The default will run
@@ -136,14 +154,14 @@
 # Rsync daemon password on host.
 #
 # [*rsyncd_auth_required*]
-# Whether authentication is mandatory when connecting to the client's rsyncd.
-# By default this is on, ensuring that BackupPC will refuse to connect to an
-# rsyncd on the client that is not password protected.
+# Whether authentication is mandatory when connecting to the client's rsyncd. By default
+# this is on, ensuring that BackupPC will refuse to connect to an rsyncd on the client that
+# is not password protected.
 #
 # [*rsync_csum_cache_verify_prob*]
-# When rsync checksum caching is enabled (by adding the --checksum-seed=32761
-# option to rsync_args), the cached checksums can be occasionally verified to
-# make sure the file contents matches the cached checksums.
+# When rsync checksum caching is enabled (by adding the --checksum-seed=32761 option to
+# rsync_args), the cached checksums can be occasionally verified to make sure the file
+# contents matches the cached checksums.
 #
 # [*rsync_args*]
 # Arguments to rsync for backup.
@@ -157,9 +175,9 @@
 #
 # [*backup_files_exclude*]
 # List of directories or files to exclude from the backup. For xfer_method smb,
-# only one of backup_files_exclude and backup_files_only can be specified per
-# share. If both are set for a particular share, then backup_files_only takes
-# precedence and backup_files_exclude is ignored.
+# only one of backup_files_exclude and backup_files_only can be specified per share.
+# If both are set for a particular share, then backup_files_only takes precedence and
+# backup_files_exclude is ignored.
 #
 # [*dump_pre_user_cmd*]
 # Optional command to run before a dump.
@@ -193,18 +211,18 @@
 # to stop/start/browse/restore backups for this host. These users will not be
 # sent email about this host.
 #
-# [*host_ip*]
-#   The host ip address to be used with host.
-#   Default: undef
+# === Examples
 #
-# [*export_hosts*]
-#   If true, the hostname and ip are exported to the /etc/hosts file.
-#   Default: true
+#  See tests folder.
+#
+# === Authors
+#
+# Scott Barr <gsbarr@gmail.com>
 #
 class backuppc::client (
   $ensure                = 'present',
   $backuppc_hostname     = '',
-  $client_hostname       = $::fqdn,
+  $client_name_alias     = false,
   $system_account        = 'backup',
   $system_home_directory = '/var/backups',
   $system_additional_commands = [],
@@ -222,48 +240,48 @@ class backuppc::client (
   $partial_age_max       = false,
   $blackout_bad_ping_limit = false,
   $ping_max_msec         = false,
+  $ping_cmd              = false,
   $blackout_good_cnt     = false,
+  $blackout_periods      = false,
   $backups_disable       = false,
-  $xfer_method           = 'tar',
+  $xfer_method           = 'rsync',
   $xfer_loglevel         = '1',
-  $smb_share_name        = false,
-  $smb_share_username    = false,
-  $smb_share_passwd      = false,
-  $smb_client_full_cmd   = false,
-  $smb_client_incr_cmd   = false,
-  $smb_client_restore_cmd = false,
-  $tar_share_name        = false,
-  $tar_client_cmd        = false,
-  $tar_full_args         = false,
-  $tar_incr_args         = false,
-  $tar_client_restore_cmd = false,
-  $rsync_client_cmd      = false,
-  $rsync_client_restore_cmd = false,
-  $rsync_share_name      = false,
+  $smb_share_name        = '',
+  $smb_share_username    = '',
+  $smb_share_passwd      = '',
+  $smb_client_full_cmd   = '',
+  $smb_client_incr_cmd   = '',
+  $smb_client_restore_cmd = '',
+  $tar_share_name        = '',
+  $tar_client_cmd        = '',
+  $tar_full_args         = '',
+  $tar_incr_args         = '',
+  $tar_client_restore_cmd = '',
+  $rsync_client_cmd      = '',
+  $rsync_client_restore_cmd = '',
+  $rsync_share_name      = '',
   $rsyncd_client_port    = false,
-  $rsyncd_user_name      = false,
-  $rsyncd_passwd         = false,
+  $rsyncd_user_name      = '',
+  $rsyncd_passwd         = '',
   $rsyncd_auth_required  = false,
   $rsync_csum_cache_verify_prob = false,
   $rsync_args            = [],
   $rsync_restore_args    = [],
   $backup_files_only     = [],
   $backup_files_exclude  = [],
-  $dump_pre_user_cmd     = false,
-  $dump_post_user_cmd    = false,
-  $dump_pre_share_cmd    = false,
-  $dump_post_share_cmd   = false,
-  $restore_pre_user_cmd  = false,
-  $restore_post_user_cmd = false,
+  $dump_pre_user_cmd     = '',
+  $dump_post_user_cmd    = '',
+  $dump_pre_share_cmd    = '',
+  $dump_post_share_cmd   = '',
+  $restore_pre_user_cmd  = '',
+  $restore_post_user_cmd = '',
   $user_cmd_check_status = true,
   $email_notify_min_days = false,
-  $email_from_user_name  = false,
-  $email_admin_user_name = false,
+  $email_from_user_name  = '',
+  $email_admin_user_name = '',
   $email_notify_old_backup_days = false,
   $hosts_file_dhcp       = 0,
   $hosts_file_more_users = '',
-  $host_ip               = undef,
-  $export_hosts          = true,
     ) {
   include backuppc::params
 
@@ -276,7 +294,9 @@ class backuppc::client (
 
   validate_re($xfer_method, '^(smb|rsync|rsyncd|tar)$',
   'Xfer_method parameter must have value of: smb, rsync, rsyncd or tar')
-
+  if $blackout_periods != false {
+      validate_array($blackout_periods)
+  }
   validate_re($xfer_loglevel, '^[0-2]$',
   'Xfer_loglevel parameter must be a 0, 1 or 2')
 
@@ -329,10 +349,8 @@ class backuppc::client (
     }
 
     if ! empty($system_additional_commands_noexec) {
-      $additional_sudo_commands_noexec =
-      join($system_additional_commands_noexec, ', ')
-      $sudo_commands_noexec = "${sudo_command_noexec},\
- ${additional_sudo_commands_noexec}"
+      $additional_sudo_commands_noexec = join($system_additional_commands_noexec, ', ')
+      $sudo_commands_noexec = "${sudo_command_noexec}, ${additional_sudo_commands_noexec}"
     } else {
       $sudo_commands_noexec = $sudo_command_noexec
     }
@@ -343,8 +361,7 @@ class backuppc::client (
         owner   => 'root',
         group   => 'root',
         mode    => '0440',
-        content =>
-        "${system_account} ALL=(ALL:ALL) NOPASSWD: ${sudo_commands}\n",
+        content => "${system_account} ALL=(ALL:ALL) NOPASSWD: ${sudo_commands}\n",
       }
     } else {
       file { '/etc/sudoers.d/backuppc':
@@ -357,8 +374,7 @@ class backuppc::client (
       owner   => 'root',
       group   => 'root',
       mode    => '0440',
-      content =>
-  "${system_account} ALL=(ALL:ALL) NOEXEC:NOPASSWD: ${sudo_commands_noexec}\n",
+      content => "${system_account} ALL=(ALL:ALL) NOEXEC:NOPASSWD: ${sudo_commands_noexec}\n",
     }
 
     user { $system_account:
@@ -400,32 +416,26 @@ class backuppc::client (
     }
   }
 
-  if $client_hostname != $backuppc_hostname {
-    @@sshkey { $client_hostname:
+  if $::fqdn != $backuppc_hostname {
+    @@sshkey { $::fqdn:
       ensure => $ensure,
       type   => 'ssh-rsa',
       key    => $::sshrsakey,
       tag    => "backuppc_sshkeys_${backuppc_hostname}",
     }
-    if $export_hosts{
-      @@host{$client_hostname:
-        ip      => $host_ip,
-      }
-    }
   }
 
-  @@file_line { "backuppc_host_${client_hostname}":
+  @@file_line { "backuppc_host_${::fqdn}":
     ensure => $ensure,
     path   => $backuppc::params::hosts,
-    match  => "^${client_hostname}.*$",
-    line   =>
-    "${client_hostname} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
+    match  => "^${::fqdn}.*$",
+    line   => "${::fqdn} ${hosts_file_dhcp} backuppc ${hosts_file_more_users}\n",
     tag    => "backuppc_hosts_${backuppc_hostname}",
   }
 
-  @@file { "${backuppc::params::config_directory}/pc/${client_hostname}.pl":
+  @@file { "${backuppc::params::config_directory}/pc/${::fqdn}.pl":
     ensure  => $ensure,
-    content => template('backuppc/host.pl.erb'),
+    content => template("${module_name}/host.pl.erb"),
     owner   => 'backuppc',
     group   => $backuppc::params::group_apache,
     mode    => '0640',

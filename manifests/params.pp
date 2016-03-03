@@ -9,7 +9,6 @@
 class backuppc::params {
   case $::osfamily {
     'Debian': {
-      $required_packages  = 'apache2-utils'
       $package            = 'backuppc'
       $service            = 'backuppc'
       $topdir             = '/var/lib/backuppc'
@@ -33,7 +32,6 @@ class backuppc::params {
       $tar_path           = '/bin/tar'
     }
     'RedHat': {
-      $required_packages  = undef
       $package            = 'BackupPC'
       $service            = 'backuppc'
       $topdir             = '/var/lib/BackupPC'
@@ -53,13 +51,9 @@ class backuppc::params {
       $tar_path           = '/bin/gtar'
     }
     default: {
-      fail("Operating system ${::operatingsystem}\
- is not supported by this module")
+      fail("Operating system ${::operatingsystem} is not supported by this module")
     }
   }
-  $ssl_cert        = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
-  $ssl_key         = '/etc/ssl/private/ssl-cert-snakeoil.key'
-  $ssl_chain       = undef
+
   $htpasswd_apache = "${config_directory}/htpasswd"
-  $collect         = true
 }

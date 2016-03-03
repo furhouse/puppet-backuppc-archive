@@ -1,16 +1,27 @@
 # BackupPC Module
 
+[![Build Status](https://secure.travis-ci.org/wyrie/puppet-backuppc.png?branch=master)](http://travis-ci.org/wyrie/puppet-backuppc)
+
+####Table of Contents
+
+1. [Overview](#overview)
+2. [Module Description](#module-description)
+3. [Usage](#usage)
+4. [Reference](#reference)
+5. [Limitations](#limitations)
+6. [Development](#development)
+
+##Overview
+
 This module will install and configure a BackupPC server and allow you to add other puppet managed nodes as clients/hosts. It
 uses exported resources to create the client's configuration file, add it to the hosts file and setup ssh access if needed.
 
-This module is a fork of a fork. 
-Original Module: https://github.com/codec/puppet-backuppc.
-Fork of original: https://github.com/wyrie/puppet-backuppc.
+This module started as a fork of https://github.com/codec/puppet-backuppc.
 
-## Description
+##Module Description
 
 BackupPC has many configuration options and this module should provide you access to most of them. BackupPC's global configuration
-file is managed by backuppc::server and is intended to setup useful defaults that can be overridden by the client if needed. 
+file is managed by backuppc::server and is intended to setup useful defaults that can be overridden by the client if needed.
 
 Where BackupPC's configuration file uses camel case for the config variables the module's class parameters would use the same names but
 replacing the uppercase characters with lowercase and an underscore prefix.
@@ -35,10 +46,10 @@ class { 'backuppc::server':
   backuppc_password => 'somesecret'
 }
 ```
-This will do the typical install, configure and service management. The module does manage apache by default (can be disabled). 
-This module will also enable SSL and forward port 80 to 443 by default.  Additionally it will create a htpasswd
-file with the default backuppc user and the password that you provide for access to the web based administration.
-You will however need to inform the apache service that something has changed. Alternatively you can install backuppc as a virtual host or whatever else suits your needs.
+This will do the typical install, configure and service management. The module does not manage apache. It will, if the apache_configuation parameter is true,
+install an apache configuration file that creates an alias from the /backuppc url to the backuppc files on the system. Additionally it will create a htpasswd
+file with the default backuppc user and the password that you provide for access to the web based administration. You will however need to inform the apache
+service that something has changed. Alternatively you can install backuppc as a virtual host or whatever else suits your needs.
 
 ### Additional login accounts
 
@@ -87,12 +98,24 @@ class { 'backuppc::client':
   tar_share_name    => ['/home', '/etc', '/var/log'],
   tar_client_cmd    => '/usr/bin/sudo $tarPath -c -v -f - -C $shareName --totals',
   tar_full_args     => '$fileList',
-  tar_incr_args     => '--newer=$incrDate $fileList',
+  tar_incr_arge     => '--newer=$incrDate $fileList',
 }
 ```
 Debian by default installs a 'localhost' host, but if you want to managed it with puppet or if you're on Centos/RHEL this example will use the tar method to backup
-the paths you specify. The example uses sudo which is not configured in the module itself.
+the paths you sepcify. The example uses sudo which is not configured in the module itself.
 
+##Reference
+
+###Classes
+
+####Public Classes
+
+* backuppc:server: Class used to install backuppc.
+* backuppc::client: Configures host for backup through backuppc.
+
+####Private Classes
+
+* backuppc::params: Default values.
 
 ## Limitations
 

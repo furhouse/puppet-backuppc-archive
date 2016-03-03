@@ -15,17 +15,16 @@ $Conf{WakeupSchedule} = [<%= @wakeup_schedule.join(', ') %>];
 $Conf{MaxBackups} = <%= @max_backups %>;
 $Conf{MaxUserBackups} = <%= @max_user_backups %>;
 $Conf{MaxPendingCmds} = <%= @max_pending_cmds %>;
-$Conf{CmdQueueNice} = <%= @cmd_queue_nice -%>;
 $Conf{MaxBackupPCNightlyJobs} = <%= @max_backup_pc_nightly_jobs %>;
 $Conf{BackupPCNightlyPeriod} = <%= @backup_pc_nightly_period %>;
 $Conf{MaxOldLogFiles} = <%= @max_old_log_files %>;
 $Conf{DfPath} = '/bin/df';
 $Conf{DfCmd} = '$dfPath $topDir';
 $Conf{SplitPath} = '/usr/bin/split';
-$Conf{ParPath}   = '<%= scope.lookupvar('backuppc::par_path') %>';
+$Conf{ParPath}   = '<%= scope.lookupvar('backuppc::params::par_path') %>';
 $Conf{CatPath}   = '/bin/cat';
-$Conf{GzipPath}  = '<%= scope.lookupvar('backuppc::gzip_path') %>';
-$Conf{Bzip2Path} = '<%= scope.lookupvar('backuppc::bzip2_path') %>';
+$Conf{GzipPath}  = '<%= scope.lookupvar('backuppc::params::gzip_path') %>';
+$Conf{Bzip2Path} = '<%= scope.lookupvar('backuppc::params::bzip2_path') %>';
 $Conf{DfMaxUsagePct} = <%= @df_max_usage_pct %>;
 $Conf{TrashCleanSleepSec} = <%= @trash_clean_sleep_sec %>;
 $Conf{DHCPAddressRanges} = [
@@ -38,11 +37,11 @@ $Conf{DHCPAddressRanges} = [
 <% end -%>
 <% end -%>];
 $Conf{BackupPCUser} = 'backuppc';
-$Conf{TopDir}      = '<%= scope.lookupvar('backuppc::topdir') %>';
-$Conf{ConfDir}     = '<%= scope.lookupvar('backuppc::config_directory') %>';
-$Conf{LogDir}      = '<%= scope.lookupvar('backuppc::log_directory') %>';
-$Conf{InstallDir}  = '<%= scope.lookupvar('backuppc::install_directory') %>';
-$Conf{CgiDir}      = '<%= scope.lookupvar('backuppc::cgi_directory') %>';
+$Conf{TopDir}      = '<%= scope.lookupvar('backuppc::server::real_topdir') %>';
+$Conf{ConfDir}     = '<%= scope.lookupvar('backuppc::params::config_directory') %>';
+$Conf{LogDir}      = '<%= scope.lookupvar('backuppc::params::log_directory') %>';
+$Conf{InstallDir}  = '<%= scope.lookupvar('backuppc::params::install_directory') %>';
+$Conf{CgiDir}      = '<%= scope.lookupvar('backuppc::params::cgi_directory') %>';
 $Conf{BackupPCUserVerify} = 1;
 $Conf{HardLinkMax} = 31999;
 $Conf{PerlModuleLoad}     = undef;
@@ -69,14 +68,14 @@ $Conf{BlackoutGoodCnt}      = <%= @blackout_good_cnt %>;
 $Conf{BlackoutPeriods} = [
 <% @blackout_periods.each do |period| -%>
 <% if period.is_a?(Hash) -%>{
-<% period.each_pair do |key,value| -%>
-  <%= key %>  => <% if value.is_a?(Array) %>[<%= value.join(', ') %>]<% else %><%= value %><% end %>,
+<% period.keys.sort.each do |key| -%>
+  <%= key %>  => <% if period[key].is_a?(Array) %>[<%= period[key].join(', ') %>]<% else %><%= period[key] %><% end %>,
 <% end -%>
 },
 <% end -%>
 <% end -%>];
 $Conf{BackupZeroFilesIsFatal} = <%= @real_bzfif %>;
-$Conf{XferMethod} = '<%= @xfer_method -%>';
+$Conf{XferMethod} = 'rsync';
 $Conf{XferLogLevel} = 1;
 $Conf{ClientCharset} = '';
 $Conf{ClientCharsetLegacy} = 'iso-8859-1';
@@ -94,11 +93,15 @@ $Conf{SmbClientRestoreCmd} = '$smbClientPath \\\\$host\\$shareName'
             . ' $I_option -U $userName -E -N -d 1'
             . ' -c tarmode\\ full -Tx -';
 $Conf{TarShareName} = '/';
-$Conf{TarClientCmd} = '<%= @tar_client_cmd -%>';
+$Conf{TarClientCmd} = '$sshPath -q -x -n -l root $host'
+                    . ' env LC_ALL=C $tarPath -c -v -f - -C $shareName+'
+                    . ' --totals';
 $Conf{TarFullArgs} = '$fileList+';
 $Conf{TarIncrArgs} = '--newer=$incrDate+ $fileList+';
-$Conf{TarClientRestoreCmd} = '<%= @tar_client_restore_cmd -%>';
-$Conf{TarClientPath} = '<%= scope.lookupvar('backuppc::tar_path') %>';
+$Conf{TarClientRestoreCmd} = '$sshPath -q -x -l root $host'
+       . ' env LC_ALL=C $tarPath -x -p --numeric-owner --same-owner'
+       . ' -v -f - -C $shareName+';
+$Conf{TarClientPath} = '<%= scope.lookupvar('backuppc::params::tar_path') %>';
 $Conf{RsyncClientPath} = '/usr/bin/rsync';
 $Conf{RsyncClientCmd} = '$sshPath -q -x -l root $host $rsyncPath $argList+';
 $Conf{RsyncClientRestoreCmd} = '$sshPath -q -x -l root $host $rsyncPath $argList+';
@@ -180,7 +183,6 @@ $Conf{NmbLookupFindHostCmd} = '$nmbLookupPath $host';
 $Conf{FixedIPNetBiosNameCheck} = 0;
 $Conf{PingPath} = '/bin/ping';
 $Conf{PingCmd} = '$pingPath -c 1 -w 3 $host';
-$Conf{Ping6Path} = '/bin/ping6';
 $Conf{PingMaxMsec} = 20;
 $Conf{CompressLevel} = 3;
 $Conf{ClientTimeout} = 72000;
@@ -192,7 +194,7 @@ $Conf{RestorePreUserCmd}  = undef;
 $Conf{RestorePostUserCmd} = undef;
 $Conf{ArchivePreUserCmd}  = undef;
 $Conf{ArchivePostUserCmd} = undef;
-$Conf{UserCmdCheckStatus} = 1;
+$Conf{UserCmdCheckStatus} = <% if @real_uccs -%>'<%= @real_uccs %>'<% end %>,;
 $Conf{ClientNameAlias} = undef;
 $Conf{SendmailPath} = '/usr/sbin/sendmail';
 $Conf{EMailNotifyMinDays} = <%= @email_notify_min_days %>;
@@ -213,9 +215,9 @@ $Conf{EMailHeaders} = <<EOF;
 <% end -%>
 EOF
 $Conf{CgiAdminUserGroup} = 'backuppc';
-$Conf{CgiAdminUsers}     = 'backuppc';
-$Conf{CgiURL} = 'http://'.$Conf{ServerHost}.'/backuppc/index.cgi';
-$Conf{Language} = 'en';
+$Conf{CgiAdminUsers}     = '<%= @cgi_admin_users %>';
+$Conf{CgiURL} = '<%= @cgi_url %>';
+$Conf{Language} = '<%= @language %>';
 $Conf{CgiUserHomePageCheck} = '';
 $Conf{CgiUserUrlCreate}     = 'mailto:%s';
 $Conf{CgiDateFormatMMDD} = 1;
@@ -241,13 +243,13 @@ $Conf{CgiStatusHilightColor} = {
     Reason_no_ping                 => '#ffff99',
     Reason_backup_canceled_by_user => '#ff9900',
     Status_backup_in_progress      => '#66cc99',
-    Disabled_OnlyManualBackups     => '#d1d1d1',   
-    Disabled_AllBackupsDisabled    => '#d1d1d1',          
+    Disabled_OnlyManualBackups     => '#d1d1d1',
+    Disabled_AllBackupsDisabled    => '#d1d1d1',
 };
 $Conf{CgiHeaders} = '<meta http-equiv="pragma" content="no-cache">';
-$Conf{CgiImageDir} = '<%= scope.lookupvar('backuppc::cgi_image_dir') %>';
+$Conf{CgiImageDir} = '<%= scope.lookupvar('backuppc::params::cgi_image_dir') %>';
 $Conf{CgiExt2ContentType} = { };
-$Conf{CgiImageDirURL} = '<%= scope.lookupvar('backuppc::cgi_image_dir_url') %>';
+$Conf{CgiImageDirURL} = '<%= @cgi_image_dir_url %>';
 $Conf{CgiCSSFile} = 'BackupPC_stnd.css';
 $Conf{CgiUserConfigEditEnable} = 1;
 $Conf{CgiUserConfigEdit} = {
