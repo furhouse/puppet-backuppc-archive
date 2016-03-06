@@ -318,6 +318,7 @@ class backuppc (
       group  => 'root',
       mode   => '0644',
     }
+  }
 
   anchor{'backuppc::end':
     require => Class['backuppc::server::service'],
